@@ -9,8 +9,20 @@
     <DataAnnotationsValidator/>
     <ValidationSummary />
     <label>
+        Date:
+        <InputDate id="date" @bind-Value="obsDate"/>
+    </label>
+    <label>
+        Temperature (C):
+        <InputNumber id="temp" @bind-Value="obsTemp"/>
+    </label>
+    <label>
+        Summary:
+        <InputText id="summary" @bind-Value="obsSum"/>
+    </label>
+    <label>
         Describe the observation:
-        <InputText id="observation" @bind-Value="userInput"/>
+        <InputText id="observation" @bind-Value="obsText"/>
     </label>
 
     <button id="submitobservation" @onclick="Send" disabled="@(!IsConnected)">Submit</button>
@@ -20,6 +32,7 @@
     @foreach (var o in observations)
     {
         Logger.LogInformation($"Observations from list {o.ObservationText}");
+        <small>@o.Date @o.TemperatureC @o.Summary</small>
         <p>@o.ObservationText</p>
     }
 </div>
@@ -27,7 +40,10 @@
 @code {
     private HubConnection? hubConnection;
     private List<WeatherObservation> observations = new List<WeatherObservation>();
-    private string? userInput;
+    private DateTime obsDate;
+    private int obsTemp;
+    private string? obsSum;
+    private string? obsText;
 
     protected override async Task OnInitializedAsync()
     {
@@ -48,7 +64,7 @@
     {
         if (hubConnection is not null)
         {
-            await hubConnection.SendAsync("SubmitObservation", new WeatherObservation { ObservationText = userInput });
+            await hubConnection.SendAsync("SubmitObservation", new WeatherObservation { Date = obsDate, TemperatureC = obsTemp, Summary = obsSum, ObservationText = obsText });
         }
     }
 

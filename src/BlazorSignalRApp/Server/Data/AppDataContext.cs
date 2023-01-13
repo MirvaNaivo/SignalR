@@ -15,5 +15,4 @@ public class AppDataContext : DbContext
     public DbSet<ChatMessageNotification> Messages { get; set; } = null!;
     public DbSet<WeatherObservation> WeatherObservations { get; set; } = null!;
     
-    // TODO: implement the required DbSet
 }
