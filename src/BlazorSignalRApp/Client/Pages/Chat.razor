@@ -1,0 +1,71 @@
+﻿@page "/chat"
+
+@inject HubUrls HubUrls
+@inject ILogger<Chat> Logger
+@using Microsoft.AspNetCore.SignalR.Client
+@implements IAsyncDisposable
+
+
+ <EditForm Model="@messages">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <label>
+        User:
+        <InputText id="username" @bind-Value="userInput"/>
+    </label>
+    <label>
+        Message:
+        <InputText id="themessage" @bind-Value="messageInput" size="50" />
+    </label>
+
+<button id="submitthemessage" @onclick="Send" disabled="@(!IsConnected)">Submit</button>
+</EditForm>
+
+    <div id="messagelist">
+        @foreach (var m in messages)
+        {
+            Logger.LogInformation($"Messages from list {m.Message} {m.User}");
+            <small>@m.MessageTime @m.User</small>
+            <p>@m.Message</p>
+        }
+    </div>
+
+@code {
+    private HubConnection? hubConnection;
+    private List<ChatMessageNotification> messages = new List<ChatMessageNotification>();
+    private string? userInput;
+    private string? messageInput;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(HubUrls.ChatHubUrl)
+            .Build();
+
+        hubConnection.On<ChatMessageNotification>("ReceiveMessage", (notification) =>
+        {
+            messages.Add(notification);
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    async Task Send() {
+        if(hubConnection is not null) {
+            await hubConnection.SendAsync("PostMessage", new ChatMessage { Message = messageInput, User = userInput });
+        }
+    }
+
+    public bool IsConnected =>
+    hubConnection.State == HubConnectionState.Connected;
+
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
